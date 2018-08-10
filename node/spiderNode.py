@@ -7,7 +7,13 @@ from thread import start_new_thread,exit_thread
 import os
 import requests
 import json
+import logging
 
+logger = logging.getLogger('spider')
+logger.setLevel(logging.INFO)
+handler = logging.FileHandler('spider_log/%s' %  time.strftime("%Y-%m-%d.log", time.localtime()) )
+handler.setLevel(logging.INFO)
+logger.addHandler(handler)
 
 __author__ = 'Lester'
 
@@ -20,31 +26,27 @@ class AddrError(Exception):
     """Base class for exceptions in this module."""
     pass
 
-class Response(object):
-    """
-    采集结果
-    """
-    __slots__ = ('url', 'statusCode','content','error','data')
-
-    def __init__(self,data):
-        # self._result = {}
-        self.init(data)
-
-    def init(self,data):
-        try:
-            data = json.loads(data)
-        except ValueError,e:
-            self.data = data
-            self.error = 'The format of the request is incorrect'
-
 
 class Spider:
     """
     爬虫
     """
+    @staticmethod
+    def validate(self,data):
+        """
+        数据验证
+        :param data:dict  请求数据
+        :return: boolean
+        """
+        pass
 
     def crawl(self,data):
-        pass
+        try:
+            data = json.loads(data)
+        except ValueError,e:
+            return json.dumps({'data':data,'error':'The format of the request is incorrect'})
+
+
 
 class SpiderNode:
     """
@@ -68,13 +70,13 @@ class SpiderNode:
         while True:
             try:
                 conn,addr = self.sock.accept()
-                if addr[0] not in ['127.0.0.2']:   # IP 判断
-                    print 'Permission denied: Illegal address'
+                if addr[0] not in ['127.0.0.2','10.10.160.77']:   # IP 判断
+                    logger.info( 'Permission denied: Illegal address %s ' % addr[0])
                     raise AddrError('Permission denied: Illegal address')
-                print "Connected by %s:%d" % (addr[0], addr[1])
+                logger.info( "Connected by %s:%d" % (addr[0], addr[1]) )
                 start_new_thread(self.crawl, (conn,))
             except KeyboardInterrupt:
-                print "connect fail %s:%d " % (addr[0],addr[1])
+                logger.info( "connect fail %s:%d " % (addr[0],addr[1]) )
                 conn.close()
             except AddrError,e:
                 conn.send(e.message)
