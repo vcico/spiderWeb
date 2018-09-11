@@ -8,6 +8,8 @@ import os
 import requests
 import json
 import logging
+from formatter import getFormatter
+from config import configure
 
 logger = logging.getLogger('spider')
 logger.setLevel(logging.INFO)
@@ -31,21 +33,20 @@ class Spider:
     """
     爬虫
     """
-    @staticmethod
-    def validate(self,data):
+
+    def __init__(self,data):
+        self.data = data
+        self.status = False # 是否成功访问页面
+        self.content = ''
+        self.statusCode = 0
+        self.url = data['url']
+        self.error = ''
+
+    def crawl(self):
         """
-        数据验证
-        :param data:dict  请求数据
-        :return: boolean
+        :return: Json 错误信息 或 内容信息
         """
         pass
-
-    def crawl(self,data):
-        try:
-            data = json.loads(data)
-        except ValueError,e:
-            return json.dumps({'data':data,'error':'The format of the request is incorrect'})
-
 
 
 class SpiderNode:
@@ -54,6 +55,7 @@ class SpiderNode:
     """
     max_size = 1024
     port = 9010
+    formatter = getFormatter(configure['data_struct'])()
 
     def __init__(self):
         self.sock = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
@@ -82,6 +84,14 @@ class SpiderNode:
                 conn.send(e.message)
                 conn.close()
 
+    @classmethod
+    def validate(cls,data):
+        """
+        数据验证
+        :param data:dict  请求数据
+        :return: boolean
+        """
+        pass
 
     def crawl(self,conn):
         data = ''
@@ -91,10 +101,18 @@ class SpiderNode:
             buf = conn.recv(self.max_size)
             data += buf
         print "recv data : %s" % data
-        conn.send('success')
-        conn.close()
+        status,data = self.formatter.decode(data)
+        if not status :
+            conn.send(data)
+            conn.close()
+        else:
+            conn.send(Spider(data).crawl())
+            conn.close()
         exit_thread()
 
 
 if __name__ == '__main__':
+    # pass
+    # from config import configure
+    # print configure
     SpiderNode().run()

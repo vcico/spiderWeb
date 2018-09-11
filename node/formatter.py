@@ -79,6 +79,13 @@ class Formatter(object):
 	def resetError(self):
 		self.errors = {}
 
+	def getError(self):
+		"""
+		:todo
+		:return:
+		"""
+		pass
+
 	@abstractmethod
 	def decode(self,data):
 		pass		
@@ -95,8 +102,11 @@ class JsonFormatter(Formatter):
 			data = json.loads(data)
 		except ValueError , e:
 			self.addError('validate',e.message)
-			return False
-		return data if self._validate(data) else False
+			return (False,self.getError())
+		if self._validate(data):
+			return (True,data)
+		else:
+			return (False,self.getError())
 	
 	def encode(self,data):
 		self.resetError()
