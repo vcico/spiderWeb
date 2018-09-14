@@ -51,16 +51,16 @@ class Formatter(object):
 		'content':[Required,InstanceOf(basestring)],
 		'error':[InstanceOf(basestring)],
 	}
-	dataErrorRule = {
-		'data':[Required,InstanceOf(basestring)],
-		'error':[Required,InstanceOf(basestring)]
-	}
+	#dataErrorRule = {
+	#	'data':[Required,InstanceOf(basestring)],
+	#	'error':[Required,InstanceOf(basestring)]
+	#}
 	validation = {
 		"type":[
 			Required,
 			If(Equals('request'),Then(requestRule)),
 			If(Equals('response'),Then(responseRule)),
-			If(Equals('dataError'),Then(dataErrorRule))
+			#If(Equals('dataError'),Then(dataErrorRule))
 		]
 	}
 
@@ -79,12 +79,16 @@ class Formatter(object):
 	def resetError(self):
 		self.errors = {}
 
-	def getError(self):
+	def getError(self,data):
 		"""
-		:todo
-		:return:
+		:param data string | dict  解析/编码 的数据
+		:return: json
 		"""
-		pass
+		strError = ''
+		for x,y in self.errors.iteritems():
+			strError += " %s : %s , " % (x,y)
+		return json.dumps({'type':'dataError','error':strError,'data':data,'info':'data in wrong format'})
+
 
 	@abstractmethod
 	def decode(self,data):
@@ -96,23 +100,23 @@ class Formatter(object):
 
 class JsonFormatter(Formatter):
 
-	def decode(self,data):
+	def decode(self,jsondata):
 		self.resetError()
 		try:
-			data = json.loads(data)
+			data = json.loads(jsondata)
 		except ValueError , e:
 			self.addError('validate',e.message)
-			return (False,self.getError())
+			return (False,self.getError(jsondata))
 		if self._validate(data):
 			return (True,data)
 		else:
-			return (False,self.getError())
+			return (False,self.getError(data))
 	
 	def encode(self,data):
 		self.resetError()
 		if not self._validate(data):
-			return False
-		return json.dumps(data)
+			return (False,self.getError(data))
+		return (True,json.dumps(data))
 
 class XmlFormatter(Formatter):
 
