@@ -60,7 +60,7 @@ class Formatter(object):
 			Required,
 			If(Equals('request'),Then(requestRule)),
 			If(Equals('response'),Then(responseRule)),
-			#If(Equals('dataError'),Then(dataErrorRule))
+			#If(Equals('error'),Then(dataErrorRule))
 		]
 	}
 
@@ -87,7 +87,14 @@ class Formatter(object):
 		strError = ''
 		for x,y in self.errors.iteritems():
 			strError += " %s : %s , " % (x,y)
-		return json.dumps({'type':'dataError','error':strError,'data':data,'info':'data in wrong format'})
+		data = {
+			'type':'error',
+			'error':strError,
+			'data':data,
+			'info':'data in wrong format'
+		}
+		self.resetError()
+		return json.dumps(data)
 
 
 	@abstractmethod
@@ -101,7 +108,6 @@ class Formatter(object):
 class JsonFormatter(Formatter):
 
 	def decode(self,jsondata):
-		self.resetError()
 		try:
 			data = json.loads(jsondata)
 		except ValueError , e:
@@ -113,7 +119,6 @@ class JsonFormatter(Formatter):
 			return (False,self.getError(data))
 	
 	def encode(self,data):
-		self.resetError()
 		if not self._validate(data):
 			return (False,self.getError(data))
 		return (True,json.dumps(data))

@@ -11,6 +11,7 @@ import logging
 from formatter import getFormatter
 from config import configure
 
+
 logger = logging.getLogger('spider')
 logger.setLevel(logging.INFO)
 handler = logging.FileHandler('spider_log/%s' %  time.strftime("%Y-%m-%d.log", time.localtime()) )
@@ -36,17 +37,48 @@ class Spider:
 
     def __init__(self,data):
         self.data = data
-        self.status = False # 是否成功访问页面
-        self.content = ''
-        self.statusCode = 0
-        self.url = data['url']
-        self.error = ''
-
+        # self.status = False # 是否成功访问页面
+        # self.content = ''
+        # self.statusCode = 0
+        # self.url = data['url']
+        # self.error = ''
+	
+	@classmethod
+	def validate(cls,data):
+		if data['type'] == 'request':
+			return True
+		return False
+		
+	
+	@classmethod
+	def response(cls,url):
+		headers = {'user-agent': 'my-app/0.0.1'}
+		try:
+			r = requests.get(url,headers, timeout=10)
+			try:
+				requests.Response.raise_for_status()
+			except requests.HTTPError,e:
+				pass
+		except requests.ConnectionError,e:
+			pass
+		except requests.Timeout,e:
+			pass
+		except requests.TooManyRedirects ,e :
+			pass
+		except requests.exceptions.RequestException,e:
+			pass
+		
     def crawl(self):
         """
         :return: Json 错误信息 或 内容信息
         """
-        pass
+        if self.validate(self.data):
+			result = []
+			return josn.dumps(result)
+		else:
+			return json.dumps({
+			
+			})
 
 
 class SpiderNode:
@@ -83,15 +115,6 @@ class SpiderNode:
             except AddrError,e:
                 conn.send(e.message)
                 conn.close()
-
-    @classmethod
-    def validate(cls,data):
-        """
-        数据验证
-        :param data:dict  请求数据
-        :return: boolean
-        """
-        pass
 
     def crawl(self,conn):
         data = ''
