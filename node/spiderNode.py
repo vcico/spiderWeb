@@ -9,7 +9,7 @@ import requests
 import json
 import logging
 from formatter import getFormatter
-
+from config import configure
 logger = logging.getLogger('spider')
 logger.setLevel(logging.INFO)
 handler = logging.FileHandler('spider_log/%s' %  time.strftime("%Y-%m-%d.log", time.localtime()) )
@@ -28,8 +28,50 @@ class Spider:
     爬虫
     """
 
-    def crawl(self,data):
-
+    def __init__(self,data):
+        self.data = data
+        # self.status = False # 是否成功访问页面
+        # self.content = ''
+        # self.statusCode = 0
+        # self.url = data['url']
+        # self.error = ''
+	
+	@classmethod
+	def validate(cls,data):
+		if data['type'] == 'request':
+			return True
+		return False
+		
+	
+	@classmethod
+	def response(cls,url):
+		headers = {'user-agent': 'my-app/0.0.1'}
+		try:
+			r = requests.get(url,headers, timeout=10)
+			try:
+				requests.Response.raise_for_status()
+			except requests.HTTPError,e:
+				pass
+		except requests.ConnectionError,e:
+			pass
+		except requests.Timeout,e:
+			pass
+		except requests.TooManyRedirects ,e :
+			pass
+		except requests.exceptions.RequestException,e:
+			pass
+		
+    def crawl(self):
+        """
+        :return: Json 错误信息 或 内容信息
+        """
+        if self.validate(self.data):
+			result = []
+			return josn.dumps(result)
+		else:
+			return json.dumps({
+			
+			})
 
 
 class SpiderNode:
@@ -38,6 +80,7 @@ class SpiderNode:
     """
     max_size = 1024
     port = 9010
+    formatter = getFormatter(configure['data_struct'])()
 
     def __init__(self):
         self.sock = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
@@ -68,7 +111,6 @@ class SpiderNode:
                 conn.send(e.message)
                 conn.close()
 
-
     def crawl(self,conn):
         data = ''
         buf = conn.recv(self.max_size)
@@ -89,8 +131,19 @@ class SpiderNode:
 				'error':response.error})
 			conn.send(result)
 		conn.close()
+        print "recv data : %s" % data
+        status,data = self.formatter.decode(data)
+        if not status :
+            conn.send(data)
+            conn.close()
+        else:
+            conn.send(Spider(data).crawl())
+            conn.close()
         exit_thread()
 
 
 if __name__ == '__main__':
+    # pass
+    # from config import configure
+    # print configure
     SpiderNode().run()

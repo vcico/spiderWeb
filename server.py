@@ -8,16 +8,16 @@ except:
 
 
 
-cachePath = 'cache/'
-hosts = {
-	'www.test1.com':'',
-	'www.test2.com':'',
-	'www.test3.com':'',
-	'www.test4.com':'',
-}
-spiders = [
-	(192.168.0.),
-]
+# cachePath = 'cache/'
+# hosts = {
+# 	'www.test1.com':'',
+# 	'www.test2.com':'',
+# 	'www.test3.com':'',
+# 	'www.test4.com':'',
+# }
+# spiders = [
+# 	(192.168.0.),
+# ]
 
 @app.route("/")
 def hello():
@@ -29,4 +29,4 @@ def mirror(url):
 
 
 if __name__ == "__main__":
-	    app.run()
+	app.run()
