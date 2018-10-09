@@ -8,6 +8,7 @@ import os
 import requests
 import json
 import logging
+from formatter import getFormatter
 
 logger = logging.getLogger('spider')
 logger.setLevel(logging.INFO)
@@ -22,29 +23,12 @@ __author__ = 'Lester'
 https://gist.github.com/kevinkindom/108ffd675cb9253f8f71
 """
 
-class AddrError(Exception):
-    """Base class for exceptions in this module."""
-    pass
-
-
 class Spider:
     """
     爬虫
     """
-    @staticmethod
-    def validate(self,data):
-        """
-        数据验证
-        :param data:dict  请求数据
-        :return: boolean
-        """
-        pass
 
     def crawl(self,data):
-        try:
-            data = json.loads(data)
-        except ValueError,e:
-            return json.dumps({'data':data,'error':'The format of the request is incorrect'})
 
 
 
@@ -63,6 +47,8 @@ class SpiderNode:
         except:
             print "Startup failed. Please check if the port is occupied"
             raise
+		cls = getFormatter('json')	
+		self.formatter  = cls()
 
 
     def run(self):
@@ -90,9 +76,19 @@ class SpiderNode:
         while len(buf) == self.max_size:
             buf = conn.recv(self.max_size)
             data += buf
-        print "recv data : %s" % data
-        conn.send('success')
-        conn.close()
+        #print "recv data : %s" % data
+        #conn.send('success')
+		fdata = self.formatter.decode(data)
+		if not fdata:
+			conn.send(self.formatter.encode({'type':'dataError','data':data,'error':self.formatter.getStringError()}))
+		else:
+			response = 
+			result = self.formatter.encode( {'url':fdata['url'],
+				'statusCode':response.status,
+				'content':response.content,
+				'error':response.error})
+			conn.send(result)
+		conn.close()
         exit_thread()
 
 
